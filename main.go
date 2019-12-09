@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/devfacet/gocmd"
 	"math"
-	"strings"
 )
 
 func main() {
 	flags := struct {
 		Help    bool `short:"h" long:"help" description:"Display usage" global:"true"`
 		Version bool `short:"v" long:"version" description:"Display version"`
-		Echo    struct {
+		Debug   struct {
 			Settings bool `settings:"true" allow-unknown-arg:"true"`
 		} `command:"echo" description:"Print arguments"`
 		Math struct {
@@ -26,8 +27,42 @@ func main() {
 	}{}
 
 	// Echo command
-	gocmd.HandleFlag("Echo", func(cmd *gocmd.Cmd, args []string) error {
-		fmt.Printf("%s\n", strings.Join(cmd.FlagArgs("Echo")[1:], " "))
+	gocmd.HandleFlag("Debug", func(cmd *gocmd.Cmd, args []string) error {
+		fmt.Printf("Sonic Debug info:")
+
+		creds := credentials.NewChainCredentials(
+			[]credentials.Provider{
+				&credentials.EnvProvider{},
+				&sharedcredentials.SharedCredentialsProvider{
+					Filename: "$HOME/.aws/config",
+					Profile:  "default",
+				},
+			})
+
+		sts := sts.New(session.Must(session.NewSession(&aws.Config{
+			Credentials: creds,
+		})))
+
+		svc := sts.New(session.New())
+		input := &sts.GetCallerIdentityInput{}
+
+		result, err := svc.GetCallerIdentity(input)
+		if err != nil {
+			if aerr, ok := err.(awserr.Error); ok {
+				switch aerr.Code() {
+				default:
+					fmt.Println(aerr.Error())
+				}
+			} else {
+				// Print the error, cast err to awserr.Error to get the Code and
+				// Message from an error.
+				fmt.Println(err.Error())
+			}
+			return
+		}
+
+		fmt.Println(result)
+
 		return nil
 	})
 
