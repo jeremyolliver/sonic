@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/jedib0t/go-pretty/table"
+	"github.com/jedib0t/go-pretty/text"
 	"os"
 	"strings"
 )
@@ -15,11 +16,10 @@ func InfoCommand(instanceidentifier string, fullOutput bool) {
 
 	if strings.HasPrefix(instanceidentifier, "i-") {
 		DescribeEC2Instance(instanceidentifier, fullOutput)
-
 	} else if strings.HasPrefix(instanceidentifier, "mi-") {
-		fmt.Println("TODO: querying managed instances via SSM is not yet supported")
+		fmt.Println(text.Colors{text.FgRed}.Sprint("TODO: querying managed instances via SSM is not yet supported"))
 	} else {
-		fmt.Println("Unsupported query format: " + instanceidentifier)
+		fmt.Println(text.Colors{text.FgRed}.Sprint("Error: Unsupported query format: " + instanceidentifier))
 	}
 }
 
@@ -60,6 +60,7 @@ func DescribeEC2Instance(instanceidentifier string, fullOutput bool) {
 	// By default, if one instance result is returned, a table summary is printed
 	// if --full option is passed, the struct is printed raw
 	if fullOutput {
+		// Print the raw nested data structure
 		fmt.Println(result)
 	} else {
 		t := table.NewWriter()
@@ -69,32 +70,42 @@ func DescribeEC2Instance(instanceidentifier string, fullOutput bool) {
 
 		instanceDetails := *result.Reservations[0].Instances[0]
 
-		// type instanceSummary struct {
-		// 	InstanceID       string `header: instance-id`
-		// 	InstanceType     string `header: instance-type`
-		// 	AccountID        string `header: account-id`
-		// 	ImageId          string `header: image-id`
-		// 	LaunchTime       string `header: Launch Time`
-		// 	KeyName          string
-		// 	AvailabilityZone string
-		// 	PrivateIpAddress string
-		// 	PrivateDnsName   string
-		// 	PublicDnsName    string
-		// 	SecurityGroups   []string
-		// 	// Tags map[string]string
-		// }
-		t.SetTitle(instanceidentifier + " (Account: " + AWSAccountDisplay() + ")")
+		var instanceName string = ""
+		var tagKeysDisplay string = ""
+		var tagValuesDisplay string = ""
+		for _, item := range instanceDetails.Tags {
+			if *item.Key == "Name" {
+				instanceName = *item.Value
+			}
+			tagKeysDisplay += *item.Key + "\n"
+			tagValuesDisplay += *item.Value + "\n"
+		}
+
+		var securityGroupIDs string = ""
+		var securityGroupNames string = ""
+		for _, item := range instanceDetails.SecurityGroups {
+			securityGroupIDs += *item.GroupId + "\n"
+			securityGroupNames += *item.GroupName + "\n"
+		}
+
+		if instanceName == "" {
+			instanceName = instanceidentifier
+		}
+
+		t.SetTitle(instanceName + " (Account: " + AWSAccountDisplay() + ")")
 
 		t.AppendRows([]table.Row{
-      {"Instance-ID", instanceidentifier},
-			{"InstanceType", *instanceDetails.InstanceType},
-			{"KeyName", *instanceDetails.KeyName},
-			{"AvailabilityZone", *instanceDetails.Placement.AvailabilityZone},
-			{"PrivateIpAddress", *instanceDetails.PrivateIpAddress},
-			{"PrivateDnsName", *instanceDetails.PrivateDnsName},
-			{"PublicDnsName", *instanceDetails.PublicDnsName},
-			{"LaunchTime", instanceDetails.LaunchTime},
-			{"ImageId", *instanceDetails.ImageId},
+			{"Instance-ID", instanceidentifier, ""},
+			{"InstanceType", *instanceDetails.InstanceType, ""},
+			{"KeyName", *instanceDetails.KeyName, ""},
+			{"AvailabilityZone", *instanceDetails.Placement.AvailabilityZone, ""},
+			{"PrivateIpAddress", *instanceDetails.PrivateIpAddress, ""},
+			{"PrivateDnsName", *instanceDetails.PrivateDnsName, ""},
+			{"PublicDnsName", *instanceDetails.PublicDnsName, ""},
+			{"LaunchTime", instanceDetails.LaunchTime, ""},
+			{"ImageId", *instanceDetails.ImageId, ""},
+			{"Tags", tagKeysDisplay, tagValuesDisplay},
+			{"SecurityGroups", securityGroupIDs, securityGroupNames},
 		})
 
 		t.Render()
