@@ -24,8 +24,6 @@ func InfoCommand(instanceidentifier string, fullOutput bool) {
 }
 
 func DescribeEC2Instance(instanceidentifier string, fullOutput bool) {
-	fmt.Println("Describing ec2 instance\n")
-
 	svc := ec2.New(SharedAWSSession())
 	input := &ec2.DescribeInstancesInput{
 		InstanceIds: []*string{
