@@ -32,7 +32,7 @@ var accountDisplay *string = nil
 // Otherwise uses the account-id from checking the current callery identity
 func AWSAccountDisplay() string {
 	if accountDisplay != nil {
-    // quick return memoized value if we can
+		// quick return memoized value if we can
 		return *accountDisplay
 	} else {
 		svc := iam.New(SharedAWSSession())
@@ -54,20 +54,20 @@ func AWSAccountDisplay() string {
 			}
 			// something went wrong - skip storing friendly IAM alias, and just use the account id
 		} else {
-      // list account aliases succeeded
-      if len(result.AccountAliases) > 0 {
-  			// we found an IAM alias. memoize it and return it
-  			accountDisplay = result.AccountAliases[0]
-  		} else {
-  			// there is no IAM alias
-  			accountDisplay = nil
-  		}
-    }
+			// list account aliases succeeded
+			if len(result.AccountAliases) > 0 {
+				// we found an IAM alias. memoize it and return it
+				accountDisplay = result.AccountAliases[0]
+			} else {
+				// there is no IAM alias
+				accountDisplay = nil
+			}
+		}
 
-    if accountDisplay == nil {
-      // fall-back to just showing the account-id if we didn't succeed in finding an alias
-      accountDisplay = AWSAccountID()
-    }
+		if accountDisplay == nil {
+			// fall-back to just showing the account-id if we didn't succeed in finding an alias
+			accountDisplay = AWSAccountID()
+		}
 
 		return *accountDisplay
 	}
@@ -76,27 +76,27 @@ func AWSAccountDisplay() string {
 var accountID *string = nil
 
 func AWSAccountID() *string {
-  if accountID != nil {
-    return accountID
-  } else {
-    stssvc := sts.New(SharedAWSSession())
-    input := &sts.GetCallerIdentityInput{}
+	if accountID != nil {
+		return accountID
+	} else {
+		stssvc := sts.New(SharedAWSSession())
+		input := &sts.GetCallerIdentityInput{}
 
-    result, err := stssvc.GetCallerIdentity(input)
-    if err != nil {
-      if aerr, ok := err.(awserr.Error); ok {
-        switch aerr.Code() {
-        default:
-          fmt.Println(aerr.Error())
-        }
-      } else {
-        // Print the error, cast err to awserr.Error to get the Code and
-        // Message from an error.
-        fmt.Println(err.Error())
-      }
-    } else {
-     accountID = result.Account
-   }
-  }
-  return accountID
+		result, err := stssvc.GetCallerIdentity(input)
+		if err != nil {
+			if aerr, ok := err.(awserr.Error); ok {
+				switch aerr.Code() {
+				default:
+					fmt.Println(aerr.Error())
+				}
+			} else {
+				// Print the error, cast err to awserr.Error to get the Code and
+				// Message from an error.
+				fmt.Println(err.Error())
+			}
+		} else {
+			accountID = result.Account
+		}
+	}
+	return accountID
 }
