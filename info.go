@@ -56,6 +56,9 @@ func DescribeEC2Instance(instanceidentifier string, fullOutput bool) {
 		return
 	}
 
+	// Display Formatting:
+	// By default, if one instance result is returned, a table summary is printed
+	// if --full option is passed, the struct is printed raw
 	if fullOutput {
 		fmt.Println(result)
 	} else {
@@ -64,7 +67,7 @@ func DescribeEC2Instance(instanceidentifier string, fullOutput bool) {
 		t.SetStyle(table.StyleColoredDark)
 		t.SetIndexColumn(1)
 
-		t.SetTitle(instanceidentifier)
+		instanceDetails := *result.Reservations[0].Instances[0]
 
 		// type instanceSummary struct {
 		// 	InstanceID       string `header: instance-id`
@@ -80,10 +83,17 @@ func DescribeEC2Instance(instanceidentifier string, fullOutput bool) {
 		// 	SecurityGroups   []string
 		// 	// Tags map[string]string
 		// }
+		t.SetTitle(instanceidentifier + " (Account: " + AWSAccountDisplay() + ")")
 
 		t.AppendRows([]table.Row{
-			{"InstanceType", *result.Reservations[0].Instances[0].InstanceType},
-			{"ImageId", *result.Reservations[0].Instances[0].ImageId},
+			{"InstanceType", instanceDetails.InstanceType},
+			{"KeyName", instanceDetails.KeyName},
+			{"AvailabilityZone", instanceDetails.Placement.AvailabilityZone},
+			{"PrivateIpAddress", instanceDetails.PrivateIpAddress},
+			{"PrivateDnsName", instanceDetails.PrivateDnsName},
+			{"PublicDnsName", instanceDetails.PublicDnsName},
+			{"LaunchTime", instanceDetails.LaunchTime},
+			{"ImageId", instanceDetails.ImageId},
 		})
 
 		t.Render()

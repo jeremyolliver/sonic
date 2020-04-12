@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/devfacet/gocmd"
 )
 
@@ -39,19 +38,4 @@ func main() {
 		Flags:       &flags,
 		ConfigType:  gocmd.ConfigTypeAuto,
 	})
-}
-
-var sharedsession *session.Session = nil
-
-// Enabling SharedConfigEnable, ensures defaults are loaded from ~/.aws/config as well as ~/.aws/credentials
-// This ensures auto-discovery of items such as region, and profiles
-func SharedAWSSession() *session.Session {
-	if sharedsession != nil {
-		return sharedsession
-	} else {
-		sharedsession = session.Must(session.NewSessionWithOptions(session.Options{
-			SharedConfigState: session.SharedConfigEnable,
-		}))
-	}
-	return sharedsession
 }
