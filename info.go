@@ -86,14 +86,15 @@ func DescribeEC2Instance(instanceidentifier string, fullOutput bool) {
 		t.SetTitle(instanceidentifier + " (Account: " + AWSAccountDisplay() + ")")
 
 		t.AppendRows([]table.Row{
-			{"InstanceType", instanceDetails.InstanceType},
-			{"KeyName", instanceDetails.KeyName},
-			{"AvailabilityZone", instanceDetails.Placement.AvailabilityZone},
-			{"PrivateIpAddress", instanceDetails.PrivateIpAddress},
-			{"PrivateDnsName", instanceDetails.PrivateDnsName},
-			{"PublicDnsName", instanceDetails.PublicDnsName},
+      {"Instance-ID", instanceidentifier},
+			{"InstanceType", *instanceDetails.InstanceType},
+			{"KeyName", *instanceDetails.KeyName},
+			{"AvailabilityZone", *instanceDetails.Placement.AvailabilityZone},
+			{"PrivateIpAddress", *instanceDetails.PrivateIpAddress},
+			{"PrivateDnsName", *instanceDetails.PrivateDnsName},
+			{"PublicDnsName", *instanceDetails.PublicDnsName},
 			{"LaunchTime", instanceDetails.LaunchTime},
-			{"ImageId", instanceDetails.ImageId},
+			{"ImageId", *instanceDetails.ImageId},
 		})
 
 		t.Render()
