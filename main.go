@@ -8,7 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/devfacet/gocmd"
+	"github.com/jedib0t/go-pretty/table"
 	"math"
+	"os"
 	"strings"
 )
 
@@ -19,6 +21,21 @@ import (
 // 	SharedConfigState: session.SharedConfigEnable,
 // }))
 
+type instanceSummary struct {
+	InstanceID       string `header: instance-id`
+	InstanceType     string `header: instance-type`
+	AccountID        string `header: account-id`
+	ImageId          string `header: image-id`
+	LaunchTime       string `header: Launch Time`
+	KeyName          string
+	AvailabilityZone string
+	PrivateIpAddress string
+	PrivateDnsName   string
+	PublicDnsName    string
+	SecurityGroups   []string
+	// Tags map[string]string
+}
+
 func main() {
 	flags := struct {
 		Help    bool `short:"h" long:"help" description:"Display usage" global:"true"`
@@ -27,6 +44,7 @@ func main() {
 			Settings bool `settings:"true" allow-unknown-arg:"true"`
 		} `command:"debug" description:"Print arguments"`
 		Info struct {
+			Full     bool `short:"f" long:"full" required:"false" description:"show full output"`
 			Settings bool `settings:"true" allow-unknown-arg:"true"`
 		} `command:"info" description:"Show information about a compute resource"`
 		Math struct {
@@ -82,18 +100,19 @@ func main() {
 		if strings.HasPrefix(instanceidentifier, "i-") {
 			// Handle queries for an aws ec2 instance-identifier
 
-			fmt.Println(&sess.Config.Region)
-
 			svc := ec2.New(sess)
 			input := &ec2.DescribeInstancesInput{
-				Filters: []*ec2.Filter{
-					{
-						Name: aws.String("instance-identifier"),
-						Values: []*string{
-							aws.String(instanceidentifier),
-						},
-					},
+				InstanceIds: []*string{
+					aws.String(instanceidentifier),
 				},
+				// Filters: []*ec2.Filter{
+				// 	{
+				// 		Name: aws.String("instance-type"),
+				// 		Values: []*string{
+				// 			aws.String(instancetype),
+				// 		},
+				// 	},
+				// },
 			}
 
 			result, err := svc.DescribeInstances(input)
@@ -111,7 +130,23 @@ func main() {
 				return nil
 			}
 
-			fmt.Println(result)
+			if flags.Info.Full {
+				fmt.Println(result)
+			} else {
+				t := table.NewWriter()
+				t.SetOutputMirror(os.Stdout)
+				t.SetStyle(table.StyleColoredDark)
+				t.SetIndexColumn(1)
+
+				t.SetTitle(instanceidentifier)
+				t.AppendRows([]table.Row{
+					{"InstanceType", *result.Reservations[0].Instances[0].InstanceType},
+					{"ImageId", *result.Reservations[0].Instances[0].ImageId},
+				})
+
+				t.Render()
+			}
+
 		} else if strings.HasPrefix(instanceidentifier, "mi-") {
 			fmt.Println("TODO: querying managed instances via SSM is not yet supported")
 		} else {
