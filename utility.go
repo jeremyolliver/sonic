@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/sts"
+	"os"
 )
 
 var sharedsession *session.Session = nil
@@ -99,4 +101,11 @@ func AWSAccountID() *string {
 		}
 	}
 	return accountID
+}
+
+func GetAnswer(question string) string {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println(question)
+	answer, _ := reader.ReadString('\n')
+	return answer
 }

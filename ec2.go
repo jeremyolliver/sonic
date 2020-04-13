@@ -93,6 +93,16 @@ func DescribeEC2Instance(instanceidentifier string, fullOutput bool) {
 			{"SecurityGroups", strings.Join(securityGroupIDs, "\n"), strings.Join(securityGroupNames, "\n")},
 		})
 
+		ssmonline, ssmrows := GetSSMStatusRows(instanceidentifier)
+		// If SSM is Offline, there may still be status results
+		t.AppendRows(ssmrows)
+
 		t.Render()
+
+		if ssmonline {
+			action := GetAnswer("Actions: (c)onnect (r)eboot")
+			fmt.Println("TODO: implement action: " + action)
+		}
+
 	}
 }
