@@ -1,0 +1,23 @@
+name: Validate Pull Request
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest, macos-latest
+    strategy:
+      matrix:
+        go: [ '1.14', '1.13' ]
+    name: Go ${{ matrix.go }} Compiles
+    steps:
+      - uses: actions/checkout@v2
+      - id: setup
+        name: Setup go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+      - id: fmt
+        run: go fmt
+      - id: mods
+        run: go mod tidy
+      - id: build
+        run: go build
